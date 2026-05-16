@@ -19,7 +19,11 @@ Write-Host "=== ETAPE 3 : Creation dossier C:\CLAUDE CODE ===" -ForegroundColor 
 New-Item -ItemType Directory -Force "C:\CLAUDE CODE"
 
 Write-Host "=== ETAPE 4 : Copie des secrets ===" -ForegroundColor Cyan
-$twin = "T:\"
+
+# Detect if T: is mapped, else use UNC path
+$twin = if (Test-Path "T:\") { "T:\" } else { "\\ROGSTRIXJH\TwinSetup\" }
+Write-Host "Using source: $twin" -ForegroundColor Cyan
+
 Copy-Item "$twin\secrets\.env" "C:\CLAUDE CODE\" -Force
 New-Item -ItemType Directory -Force "C:\CLAUDE CODE\JOB SEEKING"
 Copy-Item "$twin\secrets\credentials.json" "C:\CLAUDE CODE\JOB SEEKING\" -Force
