@@ -1,5 +1,9 @@
 # Claude Code Jumeau — Synchronisation Multi-PC
 
+[![GitHub stars](https://img.shields.io/github/stars/WoodyJ2H/claude-jumeau?style=social)](https://github.com/WoodyJ2H/claude-jumeau/stargazers)
+
+> Si ça vous fait gagner du temps, une ⭐ étoile aide les autres à le trouver.
+
 Clonez votre **environnement de développement complet** sur plusieurs machines grâce à Claude Code, des partages SMB Windows, et des scripts PowerShell automatisés.
 
 **Parfait pour:**

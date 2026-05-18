@@ -1,5 +1,9 @@
 # Claude Code Family — Multi-PC Synchronized Development
 
+[![GitHub stars](https://img.shields.io/github/stars/WoodyJ2H/claude-code-family?style=social)](https://github.com/WoodyJ2H/claude-code-family/stargazers)
+
+> If this saves you time, a ⭐ star helps others find it.
+
 Clone your **entire development environment** across machines using Claude Code, SMB shares, and automated PowerShell scripts.
 
 **Perfect for:**
