@@ -1,0 +1,47 @@
+# Personal data — never publish
+twin-config.ps1
+SHARED-BRIEF.md
+CLAUDE.md
+README-SETUP.md
+memory/
+_briefs/
+
+# Generated artifacts
+__pycache__/
+*.pyc
+*.log
+*.tmp
+.tmp-*
+
+# Personal scripts and data files
+all_ids_*.json
+audit_drive_root.py
+cleanup_drive_root.py
+create_master_ids_sheet.py
+drive_root_audit.json
+fix_autodream_email.py
+format_posts_via_claude.py
+gen_ids_master.py
+master_ids_output.md
+move_sheets_to_n8n_folder.py
+organize_drive_root.py
+read_sheet_format.py
+sheet_format_result.json
+twin_setup_posts_payload.json
+update_util_gsheets_delete.py
+util_gsheets_current.json
+workflow_ids_*.json
+apply_sheet_format.py
+write_hook_script.py
+
+# Personal reports and posts
+INVENTAIRE-*.md
+RAPPORT-*.md
+TEST-REPORT-*.md
+ZENBOOK-REPORT-*.md
+LINKEDIN-POSTS.md
+POSTS_FOR_SHEETS*.txt
+POSTS_FOR_SHEETS*.tsv
+
+# Test artifacts
+test-install-*.log
