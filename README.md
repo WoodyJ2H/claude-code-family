@@ -78,21 +78,61 @@ Run **one PowerShell script** on PC 2. Everything syncs automatically:
 
 On your **main PC** (MAIN-PC in the example):
 
-1. Create a folder: `T:\TwinSetup\` (or `C:\TwinSetup\`)
+1. Create a folder: `C:\TwinSetup\` (or wherever you prefer)
 2. Copy this repo into it
-3. Right-click → **Properties** → **Share** → Allow network access
+3. Right-click → **Properties** → **Share** → Advanced Sharing → check **Share this folder**, name it `TwinSetup`
 4. Note the network path: `\\PCNAME\TwinSetup`
 
-### Step 2: Map Network Drive (Secondary PC)
+**Recommended: create a dedicated local account for SMB access** (avoids issues with Microsoft accounts on Windows 11):
+
+```powershell
+# Run as Administrator on the Main PC
+net user smb-user YourPassword123! /add
+net localgroup "Users" smb-user /add
+```
+
+Then grant this user access to the shared folder in the Share permissions (Add → smb-user → Read or Full Control).
+
+**If hostname resolution fails** (common on Windows 11 with Microsoft accounts): disable SMB signing requirement:
+
+```powershell
+# Run as Administrator on the Main PC
+Set-SmbServerConfiguration -RequireSecuritySignature $false -Force
+```
+
+### Step 2: Configure twin-config.ps1 (Both PCs)
+
+Copy `twin-config.ps1.example` to `twin-config.ps1` and customize:
+
+```powershell
+$TwinServerHost = "MAIN-PC"       # Your main PC's computer name
+$TwinServerIP   = "192.168.1.100" # Fallback IP (set a static IP for reliability)
+$TwinShareName  = "TwinSetup"     # Name of the shared folder
+$TwinDrive      = "T:"            # Drive letter to use on client PCs
+$TwinDriveDir   = "G:\My Drive\Claude Memory"  # Google Drive sync folder
+```
+
+> **Tip:** Set a static IP on your main PC (Windows Settings → Network → your connection → IP assignment → Manual) to avoid fallback failures.
+
+### Step 3: Map Network Drive (Secondary PC)
 
 On your **second PC** (CLIENT-PC in the example):
 
-1. **File Explorer** → **This PC** → **Map Network Drive**
-2. Choose drive letter (e.g., `T:`)
-3. Paste network path: `\\MAIN-PC\TwinSetup`
-4. ✅ **Reconnect at sign-in** (recommended)
+```powershell
+# Run once to save credentials and map the drive persistently
+cmdkey /add:MAIN-PC /user:smb-user /pass:YourPassword123!
+net use T: \\MAIN-PC\TwinSetup /user:smb-user YourPassword123! /persistent:yes
+```
 
-### Step 3: Run Installation Script (Secondary PC)
+Or use the automated script (after copying `twin-config.ps1`):
+
+```powershell
+# Creates a scheduled task that mounts T:\ automatically at every logon
+# Run as Administrator
+.\setup-automount.ps1
+```
+
+### Step 4: Run Installation Script (Secondary PC)
 
 Open **PowerShell as Administrator** and run:
 
@@ -144,10 +184,10 @@ powershell -ExecutionPolicy Bypass -Command "& { (Invoke-WebRequest -Uri 'https:
 - Run: `.\INSTALL.ps1`
 - (Not: double-click the .ps1 file)
 
-### "Credentials not valid"
-- Main PC: Set a network password (Microsoft Account or local password)
-- Secondary PC: Enter credentials when prompted (domain\username format, e.g., `MAIN-PC\yourusername`)
-- If still blocked: Disable password protection on the share temporarily
+### "Credentials not valid" or "Access denied"
+- Use a **dedicated local account** (`smb-user`) instead of your Microsoft account — Microsoft accounts on Windows 11 often fail with SMB auth
+- Save credentials with `cmdkey /add:MAIN-PC /user:smb-user /pass:YourPassword123!` on the client PC before mapping
+- If still blocked: on the main PC, disable SMB signing: `Set-SmbServerConfiguration -RequireSecuritySignature $false -Force` (as Administrator)
 
 ### Drive mapping disappears
 - Reopen **File Explorer** → **This PC** → **Map Network Drive**
@@ -177,22 +217,31 @@ Or use **Settings Sync** built into VS Code (Ctrl+Shift+P → "Settings Sync: Tu
 
 ## Architecture Notes
 
+### Source of Truth — Drive-first architecture (v3)
+
+- **Google Drive** is the source of truth for `SHARED-BRIEF.md` (the session handoff file)
+- **T:\ (SMB share)** is a best-effort LAN cache — never blocking
+- If the main PC is off, the client PC reads Drive instead. No errors.
+
+```
+Session ends (main PC)   →  write-shared-brief.ps1  →  Drive (always) + T:\ (if online)
+Session starts (client)  →  read-shared-brief.ps1   →  Drive (priority) → T:\ (fallback)
+```
+
 ### Why SMB (not Dropbox/OneDrive)?
-- ✅ No cloud dependency → faster, more private
-- ✅ Works offline after initial sync
-- ✅ Secrets stay on local network
+- ✅ Secrets stay on local network, never hit the cloud
+- ✅ Works for large files without storage quotas
 - ✅ Zero cost, works on any Windows LAN
 
 ### Why PowerShell Script (not Docker)?
 - ✅ Works on Windows without Linux VM
-- ✅ No admin rights required (after initial share setup)
 - ✅ Idempotent — safe to run multiple times
 - ✅ Easy to customize for your own setup
 
 ### What About Conflicts?
-- **T: is the source of truth** — always sync TO PC 2 FROM PC 1
-- If you edit `.env` on PC 2, manually copy it back to T:\ before syncing again
-- Workflows (n8n) live in the cloud (Hostinger) — not synced locally
+- Edit secrets on PC 2 → manually copy back to `T:\secrets\` before syncing again
+- `SHARED-BRIEF.md` is always written by the machine that just finished work — no conflicts
+- Workflows (n8n) live in the cloud — not synced locally
 
 ---
 
