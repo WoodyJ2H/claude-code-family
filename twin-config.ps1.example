@@ -1,0 +1,24 @@
+# twin-config.ps1.example
+# Copy this file to "twin-config.ps1" and customize for your setup.
+# All Twin Setup scripts source this file - one place to configure everything.
+
+# ----- SMB share configuration -----
+# Hostname of the main PC (the one sharing the folder)
+$TwinServerHost = "MAIN-PC"
+
+# IP fallback if hostname resolution fails (set a static IP on your main PC)
+$TwinServerIP = "192.168.1.100"
+
+# Name of the shared folder on the main PC
+$TwinShareName = "TwinSetup"
+
+# Drive letter to mount the share on (client PCs)
+$TwinDrive = "T:"
+
+# ----- Cloud sync configuration -----
+# Path to your Google Drive folder used as source of truth for SHARED-BRIEF
+# This folder must be synced locally via Google Drive desktop on BOTH PCs
+$TwinDriveDir = "G:\My Drive\Claude Memory"
+
+# ----- Optional: model identifier shown in the brief -----
+$TwinModel = "Sonnet 4.6"
