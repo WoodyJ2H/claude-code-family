@@ -20,8 +20,19 @@ New-Item -ItemType Directory -Force "C:\CLAUDE CODE"
 
 Write-Host "=== ETAPE 4 : Copie des secrets ===" -ForegroundColor Cyan
 
-# Detect if T: is mapped, else use UNC path
-$twin = if (Test-Path "T:\") { "T:\" } else { "\\ROGSTRIXJH\TwinSetup\" }
+# Load shared config (copy twin-config.ps1.example to twin-config.ps1 first)
+$configPath = Join-Path $PSScriptRoot "twin-config.ps1"
+if (Test-Path $configPath) {
+    . $configPath
+} else {
+    Write-Host "WARNING: twin-config.ps1 missing - using defaults (MAIN-PC/TwinSetup/T:)." -ForegroundColor Yellow
+    $TwinServerHost = "MAIN-PC"
+    $TwinShareName  = "TwinSetup"
+    $TwinDrive      = "T:"
+}
+
+# Detect if drive is mapped, else use UNC path
+$twin = if (Test-Path "${TwinDrive}\") { "${TwinDrive}\" } else { "\\$TwinServerHost\$TwinShareName\" }
 Write-Host "Using source: $twin" -ForegroundColor Cyan
 
 Copy-Item "$twin\secrets\.env" "C:\CLAUDE CODE\" -Force

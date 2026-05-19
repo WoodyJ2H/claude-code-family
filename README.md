@@ -4,6 +4,29 @@
 
 > If this saves you time, a ⭐ star helps others find it.
 
+## 🆕 v3 — Drive-first architecture (2026-05-19)
+
+**Problem solved:** when the SMB server PC was off, the client PC would crash on startup (9 cascading errors in our case: T:\ unreachable → hook blocked → context lost).
+
+**Solution:** Google Drive is now the source of truth for `SHARED-BRIEF.md`. The SMB share (T:\) is a best-effort LAN cache. No more blocking dependency.
+
+**New files:**
+
+- `write-shared-brief.ps1` — writes the session brief to Drive (priority) + T:\ (best-effort)
+- `read-shared-brief.ps1` — reads the brief at SessionStart, auto-detects if catch-up is needed
+- `mount-T.ps1` — simplified, silent on failure
+
+**4 validated scenarios:**
+
+1. Main PC alone — OK (T:\ = local disk)
+2. Client PC alone, main PC off — OK (Drive cloud)
+3. Main then client (LAN) — OK (Drive + T:\ cache)
+4. Client then main (time-delayed) — OK (Drive catches up both ways)
+
+See [Release notes](https://github.com/WoodyJ2H/claude-code-family/releases) for full details.
+
+---
+
 Clone your **entire development environment** across machines using Claude Code, SMB shares, and automated PowerShell scripts.
 
 **Perfect for:**
@@ -53,7 +76,7 @@ Run **one PowerShell script** on PC 2. Everything syncs automatically:
 
 ### Step 1: Share the Setup Folder (Primary PC)
 
-On your **main PC** (ROGSTRIXJH in the example):
+On your **main PC** (MAIN-PC in the example):
 
 1. Create a folder: `T:\TwinSetup\` (or `C:\TwinSetup\`)
 2. Copy this repo into it
@@ -62,11 +85,11 @@ On your **main PC** (ROGSTRIXJH in the example):
 
 ### Step 2: Map Network Drive (Secondary PC)
 
-On your **second PC** (ASUSZENBOOK in the example):
+On your **second PC** (CLIENT-PC in the example):
 
 1. **File Explorer** → **This PC** → **Map Network Drive**
 2. Choose drive letter (e.g., `T:`)
-3. Paste network path: `\\ROGSTRIXJH\TwinSetup`
+3. Paste network path: `\\MAIN-PC\TwinSetup`
 4. ✅ **Reconnect at sign-in** (recommended)
 
 ### Step 3: Run Installation Script (Secondary PC)
@@ -112,7 +135,7 @@ powershell -ExecutionPolicy Bypass -Command "& { (Invoke-WebRequest -Uri 'https:
 
 ### "Network path not found"
 - **Primary PC:** Verify the folder is shared. Right-click → Properties → Share tab → "Share..." button
-- **Secondary PC:** Try UNC path directly: `\\ROGSTRIXJH\TwinSetup` (replace `ROGSTRIXJH` with your main PC's name)
+- **Secondary PC:** Try UNC path directly: `\\MAIN-PC\TwinSetup` (replace `MAIN-PC` with your main PC's name)
 - Check Windows Firewall/Norton: Allow SMB (port 445)
 
 ### PowerShell script closes immediately
@@ -123,7 +146,7 @@ powershell -ExecutionPolicy Bypass -Command "& { (Invoke-WebRequest -Uri 'https:
 
 ### "Credentials not valid"
 - Main PC: Set a network password (Microsoft Account or local password)
-- Secondary PC: Enter credentials when prompted (domain\username format, e.g., `ROGSTRIXJH\jhhig`)
+- Secondary PC: Enter credentials when prompted (domain\username format, e.g., `MAIN-PC\yourusername`)
 - If still blocked: Disable password protection on the share temporarily
 
 ### Drive mapping disappears

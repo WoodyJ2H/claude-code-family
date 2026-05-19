@@ -4,6 +4,29 @@
 
 > Si ça vous fait gagner du temps, une ⭐ étoile aide les autres à le trouver.
 
+## 🆕 v3 — Architecture Drive-first (2026-05-19)
+
+**Problème résolu :** quand le PC serveur SMB est éteint, le PC client démarrait en erreur (9 erreurs en cascade dans notre cas : T:\ inaccessible → hook bloqué → contexte perdu).
+
+**Solution :** Google Drive devient la source de vérité pour le `SHARED-BRIEF.md`. Le partage SMB (T:\) reste un cache LAN best-effort. Plus aucune dépendance bloquante.
+
+**Nouveaux fichiers :**
+
+- `write-shared-brief.ps1` — écrit le brief de session vers Drive (priorité) + T:\ (best-effort)
+- `read-shared-brief.ps1` — lit le brief au SessionStart, détecte automatiquement si rattrapage nécessaire
+- `mount-T.ps1` — simplifié, silencieux en cas d'échec
+
+**4 scénarios validés :**
+
+1. PC principal seul — OK (T:\ = disque local)
+2. PC client seul, principal éteint — OK (Drive cloud)
+3. Principal puis client (LAN) — OK (Drive + T:\ cache)
+4. Client puis principal (décalé dans le temps) — OK (Drive rattrape dans les deux sens)
+
+Voir [Release notes](https://github.com/WoodyJ2H/claude-code-family/releases) pour le détail.
+
+---
+
 Clonez votre **environnement de développement complet** sur plusieurs machines grâce à Claude Code, des partages SMB Windows, et des scripts PowerShell automatisés.
 
 **Parfait pour:**
@@ -53,7 +76,7 @@ Lancez **un script PowerShell** sur PC 2. Tout se synchronise automatiquement :
 
 ### Étape 1 : Partager le dossier de configuration (PC Principal)
 
-Sur votre **PC principal** (ROGSTRIXJH dans l'exemple) :
+Sur votre **PC principal** (MAIN-PC dans l'exemple) :
 
 1. Créez un dossier : `T:\TwinSetup\` (ou `C:\TwinSetup\`)
 2. Copiez ce repo dedans
@@ -62,11 +85,11 @@ Sur votre **PC principal** (ROGSTRIXJH dans l'exemple) :
 
 ### Étape 2 : Mapper le lecteur réseau (PC Secondaire)
 
-Sur votre **deuxième PC** (ASUSZENBOOK dans l'exemple) :
+Sur votre **deuxième PC** (CLIENT-PC dans l'exemple) :
 
 1. **Explorateur de fichiers** → **Ce PC** → **Mapper un lecteur réseau**
 2. Choisissez une lettre de lecteur (ex: `T:`)
-3. Collez le chemin réseau : `\\ROGSTRIXJH\TwinSetup`
+3. Collez le chemin réseau : `\\MAIN-PC\TwinSetup`
 4. ✅ **Se reconnecter à l'ouverture de session** (recommandé)
 
 ### Étape 3 : Lancer le script d'installation (PC Secondaire)
@@ -112,7 +135,7 @@ powershell -ExecutionPolicy Bypass -Command "& { (Invoke-WebRequest -Uri 'https:
 
 ### "Le chemin réseau est introuvable"
 - **PC Principal** : Vérifiez que le dossier est partagé. Clic droit → Propriétés → Onglet Partager → Bouton "Partager"
-- **PC Secondaire** : Essayez le chemin UNC directement : `\\ROGSTRIXJH\TwinSetup` (remplacez `ROGSTRIXJH` par le nom de votre PC principal)
+- **PC Secondaire** : Essayez le chemin UNC directement : `\\MAIN-PC\TwinSetup` (remplacez `MAIN-PC` par le nom de votre PC principal)
 - Vérifiez le pare-feu Windows/Norton : Autoriser SMB (port 445)
 
 ### Le script PowerShell se ferme immédiatement
@@ -123,7 +146,7 @@ powershell -ExecutionPolicy Bypass -Command "& { (Invoke-WebRequest -Uri 'https:
 
 ### "Les identifiants ne sont pas valides"
 - PC Principal : Définissez un mot de passe réseau (compte Microsoft ou mot de passe local)
-- PC Secondaire : Entrez vos identifiants quand demandé (format domaine\utilisateur, ex: `ROGSTRIXJH\jhhig`)
+- PC Secondaire : Entrez vos identifiants quand demandé (format domaine\utilisateur, ex: `MAIN-PC\yourusername`)
 - Si toujours bloqué : Désactivez temporairement la protection par mot de passe sur le partage
 
 ### Le lecteur mappé disparaît
